@@ -81,3 +81,8 @@ print(f'Colunas: {list(df.columns)}')
 print(f'Tipo da coluna Valor: {df["Valor"].dtype}')
 print(f'Distribuição de tipo_conta:\n{df["tipo_conta"].value_counts()}')
 print(df.head())
+
+# Exporta a base consolidada dos dados para o formato parquet
+df.to_parquet('finbra_consolidado.parquet', index=False)
+
+print('Arquivo Parquet salvo com sucesso: finbra_consolidado.parquet')
