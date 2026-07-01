@@ -27,6 +27,9 @@ env/
 .python-version
 .ipynb_checkpoints/
 
+# --- Dados -----------------------------------------------------
+dados_extraidos/
+
 # --- Editores / IDEs ------------------------------------------------------
 .vscode/
 .idea/
