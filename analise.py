@@ -57,3 +57,25 @@ comparacao = maceio[["ano", "pago_per_capita_total"]].merge(media_outras, on="an
 comparacao = comparacao.rename(columns={"pago_per_capita_total": "maceio_per_capita"})
 
 print(comparacao.sort_values("ano"))
+
+# Ranking de taxa de execução média por capital contendo todas as funções e anos 
+ranking_execucao =(
+    tabela_execucao.groupby(["Instituição", "UF"])["taxa_execucao"]
+    .mean()
+    .reset_index()
+    .rename(columns={"taxa_execucao":"taxa_execucao_media"})
+    .sort_values("taxa_execucao_media", ascending=False)
+)
+
+print(ranking_execucao)
+
+# Ranking de gasto per capita total médio por capital, ranqueando todos os anos 
+ranking_per_capta = (
+    total_ano.groupby(["Instituição", "UF"])["pago_per_capita_total"]
+    .mean()
+    .reset_index()
+    .rename(columns={"pago_per_capita_total": "media_per_capita"})
+    .sort_values("media_per_capita", ascending=False)
+)
+
+print(ranking_per_capta)
