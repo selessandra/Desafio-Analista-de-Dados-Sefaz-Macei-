@@ -36,3 +36,24 @@ tabela_execucao["pago_per_capita"] = (
 )
 
 print(tabela_execucao[["Instituição", "ano", "Conta", "Despesas Empenhadas", "Despesas Pagas", "taxa_execucao", "População", "pago_per_capita"]].head(10))
+
+total_ano = tabela_execucao.groupby(["Instituição", "UF", "ano"]).agg(
+    total_pago=("Despesas Pagas", "sum"),
+    populacao=("População", "first")
+). reset_index()
+
+total_ano["pago_per_capita_total"] = total_ano["total_pago"] / total_ano["populacao"]
+
+# Separando maceió das outras capitais 
+maceio = total_ano[total_ano["Instituição"].str.contains("Maceió")]
+outras_capitais = total_ano[~total_ano["Instituição"].str.contains("Maceió")]
+
+# Calculando média das outras capitais, anuais 
+media_outras = outras_capitais.groupby("ano")["pago_per_capita_total"].mean().reset_index()
+media_outras = media_outras.rename(columns={"pago_per_capita_total": "media_outras_capitais"})
+
+# Junta Maceió com a média das outras, lado a lado, por ano
+comparacao = maceio[["ano", "pago_per_capita_total"]].merge(media_outras, on="ano")
+comparacao = comparacao.rename(columns={"pago_per_capita_total": "maceio_per_capita"})
+
+print(comparacao.sort_values("ano"))
