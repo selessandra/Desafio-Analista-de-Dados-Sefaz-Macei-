@@ -1,81 +1,51 @@
 """
 Script de análise da base consolidada de despesas das capitais
-(FINBRA/Siconfi), comparando o Empenhado e Pago
-por função, com recortes adicionais de per capita e evolução temporal.
+(FINBRA/Siconfi). Usa as funções de calculos.py para gerar os
+indicadores e imprime os resultados para investigação.
 """
 
-import pandas as pd
-
-# Lendo a base consolidada que foi criada 
-df = pd.read_parquet("finbra_consolidado.parquet")
-
-# Filtrando as linhas de "função", para indicador
-df_funcao = df[df["tipo_conta"] == "função"]
-
-tabela_execucao = df_funcao.pivot_table(
-    index=["Instituição", "UF", "ano", "Conta"],
-    columns="Coluna",
-    values="Valor",
-    aggfunc="sum"
+from calculos import (
+    carregar_base,
+    calcular_tabela_execucao,
+    calcular_total_por_ano,
+    calcular_ranking_execucao,
+    calcular_ranking_per_capita,
+    calcular_comparacao_maceio,
+    calcular_ranking_2025,
 )
 
-# Calcula a Taxa de Execução: quanto do que foi empenhado, foi pago
-tabela_execucao["taxa_execucao"] = (
-    tabela_execucao["Despesas Pagas"] / tabela_execucao["Despesas Empenhadas"] * 100
-)
+# --- Indicadores 2020-2024 (anos completos, 26 capitais) ---
+df = carregar_base()
+tabela_execucao = calcular_tabela_execucao(df)
+total_por_ano = calcular_total_por_ano(tabela_execucao)
+ranking_execucao = calcular_ranking_execucao(tabela_execucao)
+ranking_per_capita = calcular_ranking_per_capita(total_por_ano)
+comparacao = calcular_comparacao_maceio(total_por_ano)
 
-# Reseta o índice para transformar a tabela pivotada de volta em colunas normais
-tabela_execucao = tabela_execucao.reset_index()
+print("Top 5 - Maior taxa de execução média (2020-2024):")
+print(ranking_execucao.head(5))
 
-populacao = df[["Instituição", "ano", "População"]]. drop_duplicates()
+print("\nTop 5 - Menor taxa de execução média (2020-2024):")
+print(ranking_execucao.tail(5))
 
-tabela_execucao = tabela_execucao.merge(populacao, on=["Instituição", "ano"], how="left")
+print("\nTop 5 - Maior per capita médio (2020-2024):")
+print(ranking_per_capita.head(5))
 
-tabela_execucao["pago_per_capita"] = (
-    tabela_execucao["Despesas Pagas"] / tabela_execucao["População"]
-)
+print("\nTop 5 - Menor per capita médio (2020-2024):")
+print(ranking_per_capita.tail(5))
 
-print(tabela_execucao[["Instituição", "ano", "Conta", "Despesas Empenhadas", "Despesas Pagas", "taxa_execucao", "População", "pago_per_capita"]].head(10))
+print("\nMaceió x média das outras capitais, por ano:")
+print(comparacao)
 
-total_ano = tabela_execucao.groupby(["Instituição", "UF", "ano"]).agg(
-    total_pago=("Despesas Pagas", "sum"),
-    populacao=("População", "first")
-). reset_index()
+# --- Indicador extra: recorte isolado de 2025 (parcial, 11 capitais) ---
+capitais_2025, ranking_execucao_2025, ranking_per_capita_2025 = calcular_ranking_2025()
 
-total_ano["pago_per_capita_total"] = total_ano["total_pago"] / total_ano["populacao"]
+print(f"\n\nCapitais que já reportaram em 2025 ({len(capitais_2025)} de 26):")
+for capital in capitais_2025:
+    print(f"  - {capital}")
 
-# Separando maceió das outras capitais 
-maceio = total_ano[total_ano["Instituição"].str.contains("Maceió")]
-outras_capitais = total_ano[~total_ano["Instituição"].str.contains("Maceió")]
+print("\nRanking de taxa de execução - somente 2025 (parcial):")
+print(ranking_execucao_2025)
 
-# Calculando média das outras capitais, anuais 
-media_outras = outras_capitais.groupby("ano")["pago_per_capita_total"].mean().reset_index()
-media_outras = media_outras.rename(columns={"pago_per_capita_total": "media_outras_capitais"})
-
-# Junta Maceió com a média das outras, lado a lado, por ano
-comparacao = maceio[["ano", "pago_per_capita_total"]].merge(media_outras, on="ano")
-comparacao = comparacao.rename(columns={"pago_per_capita_total": "maceio_per_capita"})
-
-print(comparacao.sort_values("ano"))
-
-# Ranking de taxa de execução média por capital contendo todas as funções e anos 
-ranking_execucao =(
-    tabela_execucao.groupby(["Instituição", "UF"])["taxa_execucao"]
-    .mean()
-    .reset_index()
-    .rename(columns={"taxa_execucao":"taxa_execucao_media"})
-    .sort_values("taxa_execucao_media", ascending=False)
-)
-
-print(ranking_execucao)
-
-# Ranking de gasto per capita total médio por capital, ranqueando todos os anos 
-ranking_per_capta = (
-    total_ano.groupby(["Instituição", "UF"])["pago_per_capita_total"]
-    .mean()
-    .reset_index()
-    .rename(columns={"pago_per_capita_total": "media_per_capita"})
-    .sort_values("media_per_capita", ascending=False)
-)
-
-print(ranking_per_capta)
+print("\nRanking de per capita - somente 2025 (parcial):")
+print(ranking_per_capita_2025)
