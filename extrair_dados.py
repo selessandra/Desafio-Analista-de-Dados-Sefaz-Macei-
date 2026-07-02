@@ -14,7 +14,7 @@ pasta_compactados = Path('dados_compactos')
 pasta_extraidos = Path('dados_extraidos')
 pasta_extraidos.mkdir(exist_ok=True)
 
-# Percorre as pastas de ano em ordem (2020, 2021, 2022, ...)
+# Percorrendo as pastas em ordem anual 
 for pasta_ano in sorted(pasta_compactados.iterdir()):
 
     # Ignora qualquer item que não seja uma pasta (ex.: arquivos soltos)
