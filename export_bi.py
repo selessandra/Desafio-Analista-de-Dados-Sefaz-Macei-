@@ -1,6 +1,6 @@
 """
 Script responsável por exportar as tabelas de indicadores usadas no
-storytelling final (Power BI): ranking de taxa de execução, ranking
+Power BI: ranking de taxa de execução, ranking
 de per capita, e evolução temporal (Maceió x demais capitais).
 """
 
@@ -21,7 +21,7 @@ ranking_execucao = calcular_ranking_execucao(tabela_execucao)
 ranking_per_capita = calcular_ranking_per_capita(total_por_ano)
 comparacao = calcular_comparacao_maceio(total_por_ano)
 
-# Exporta apenas as tabelas usadas no storytelling final, em Parquet
+# Exporta só as tabelas necessárias para o power BI
 ranking_execucao.to_parquet("powerbi_ranking_execucao.parquet", index=False)
 ranking_per_capita.to_parquet("powerbi_ranking_per_capita.parquet", index=False)
 comparacao.to_parquet("powerbi_comparacao_maceio.parquet", index=False)
